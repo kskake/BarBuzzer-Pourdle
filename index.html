@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pour-dle – BarBuzzer</title>
+  <meta name="description" content="Pour-dle: a free drinking-themed Wordle game. Guess the 5-letter bar word in 6 tries with colour-coded feedback. A new word every day — no account needed.">
+
+  <!-- Favicon -->
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+
+  <!-- Pub Chalkboard Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Gochi+Hand&display=swap" rel="stylesheet" />
+
+  <!-- Game styles -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <div id="site-header"></div>
+
+  <!-- ===== Header ===== -->
+  <header id="game-header" role="banner">
+    <div class="header-left">
+      <h1>Pour-dle 🍺</h1>
+      <span class="header-sub">A Drinking-Themed Word Game</span>
+    </div>
+    <a href="/" class="home-link" aria-label="Back to BarBuzzer home">
+      ← Home
+    </a>
+  </header>
+
+  <!-- ===== XP Bar ===== -->
+  <div id="xp-bar-container" aria-label="Experience points progress">
+    <div id="xp-bar-info">
+      <span id="xp-level-label">Lv 1 · Designated Driver</span>
+      <span id="xp-text">0 / 1000 XP</span>
+    </div>
+    <div id="xp-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="XP progress">
+      <div id="xp-fill"></div>
+    </div>
+  </div>
+
+  <!-- ===== Mode selector ===== -->
+  <div id="mode-selector" role="group" aria-label="Game mode selection">
+    <button class="mode-btn active" data-mode="daily"      aria-pressed="true">📅 Daily</button>
+    <button class="mode-btn"        data-mode="continuous" aria-pressed="false">🔁 Continuous</button>
+  </div>
+
+  <!-- ===== Current mode label ===== -->
+  <div id="mode-label" aria-live="polite" aria-label="Current game mode and progress"></div>
+
+  <!-- ===== Toast message ===== -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ===== XP gain toast ===== -->
+  <div id="xp-toast" class="xp-toast" aria-live="polite"></div>
+
+  <!-- ===== Game board ===== -->
+  <main id="board-container" role="main" aria-label="Pour-dle game board">
+    <div id="board" role="grid" aria-label="Round grid, 6 rounds of 5 letters"></div>
+  </main>
+
+  <!-- ===== Taps (Virtual Keyboard) ===== -->
+  <section id="keyboard" aria-label="Taps – virtual keyboard"></section>
+
+  <!-- ===== Footer ===== -->
+  <footer id="game-footer" role="contentinfo">
+    <p>Find the 5-letter drinking word in 6 rounds. Drink responsibly.</p>
+  </footer>
+
+  <!-- ===== End-game Modal ===== -->
+  <div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div id="modal">
+      <div id="modal-emoji" aria-hidden="true"></div>
+      <h2 id="modal-title"></h2>
+      <p id="modal-subtitle"></p>
+      <p id="modal-word" aria-label="The answer"></p>
+      <p id="modal-xp" class="modal-meta" aria-live="polite"></p>
+      <p id="modal-meta" class="modal-meta"></p>
+      <div class="modal-actions">
+        <button id="share-tab-btn" class="modal-btn modal-btn--share" aria-label="Share your results">
+          📋 Share the Tab
+        </button>
+        <button id="next-word-btn" class="modal-btn modal-btn--next" aria-label="Play next word" style="display:none">
+          Next Round →
+        </button>
+        <button id="play-again-btn" class="modal-btn" aria-label="Close results">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Game Script ===== -->
+  <script src="script.js"></script>
+
+  <!-- ===== GAME GUIDE ===== -->
+  <section class="game-guide" aria-labelledby="pour-dle-guide-heading" style="max-width:520px;margin:2rem auto;padding:1.5rem 1.25rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#cdd6e0;font-family:'Gochi Hand','Permanent Marker',cursive,sans-serif;line-height:1.7;">
+    <h2 id="pour-dle-guide-heading" style="color:#32ff00;font-size:1.4rem;font-weight:800;margin:0 0 0.75rem;">📖 Pour-dle – Game Guide</h2>
+    <p style="margin:0 0 0.75rem;">Pour-dle is a bar-themed word guessing game. Each day a new secret 5-letter drinking word is selected — your mission is to find it in 6 rounds or fewer using colour-coded clues.</p>
+    <h3 style="color:#00ffff;font-size:1rem;font-weight:700;margin:1rem 0 0.4rem;">How to Play</h3>
+    <ol style="margin:0 0 0.75rem;padding-left:1.4rem;">
+        <li>Type any 5-letter word using the on-screen taps or your keyboard.</li>
+        <li>Press <strong>Enter / Pour It</strong> to submit your guess.</li>
+        <li><span style="color:#6aff6a;">🟩 Green</span> = correct letter, correct position.</li>
+        <li><span style="color:#ffd700;">🟨 Yellow</span> = correct letter, wrong position.</li>
+        <li><span style="color:#888;">⬛ Grey</span> = letter not in the word.</li>
+        <li>Solve the word in 6 tries to earn XP and level up!</li>
+    </ol>
+    <h3 style="color:#00ffff;font-size:1rem;font-weight:700;margin:1rem 0 0.4rem;">Modes</h3>
+    <ul style="margin:0;padding-left:1.4rem;">
+        <li><strong>📅 Daily</strong> — One shared word per day. Compare with friends!</li>
+        <li><strong>🔁 Continuous</strong> — Unlimited rounds, earn XP with every win.</li>
+    </ul>
+  </section>
+
+  <div id="site-footer"></div>
+  <script src="/scripts/load-partials.js"></script>
+</body>
+</html>

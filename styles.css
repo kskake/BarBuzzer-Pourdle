@@ -1,0 +1,546 @@
+/* =====================================================
+   Pour-dle – Pub Chalkboard Aesthetic
+   Bar-Themed Word Game for BarBuzzer
+   ===================================================== */
+
+/* ---------- CSS Variables ---------- */
+:root {
+  /* Pub Chalkboard feedback colours */
+  --color-correct:    #FFBF00; /* Top Shelf – Neon Amber (beer-like)         */
+  --color-present:    rgba(255, 255, 255, 0.28); /* Wrong spot – Frosted Glass */
+  --color-absent:     #333333; /* Not in word – Dimmed/Faded                 */
+  --color-incorrect:  #555555; /* Absent keyboard key                        */
+
+  /* Pub Chalkboard palette */
+  --bg-deep:        #1a1a1a;
+  --bg-surface:     #222222;
+  --bg-tile:        transparent;
+  --border-default: rgba(255, 255, 255, 0.45);
+  --amber:          #d4820a;
+  --amber-light:    #f0a820;
+  --neon-amber:     #FFBF00;
+  --text-primary:   #f5f0e8;
+  --text-muted:     #aaaaaa;
+
+  /* Tile sizes */
+  --tile-size:      clamp(44px, 11vw, 62px);
+  --tile-gap:       clamp(4px, 1vw, 6px);
+
+  /* Keyboard key sizes */
+  --key-height:     clamp(40px, 8vw, 58px);
+  --key-min-width:  clamp(28px, 6vw, 43px);
+}
+
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Permanent Marker', 'Gochi Hand', cursive, system-ui, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Header ---------- */
+#game-header {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+#game-header h1 {
+  font-size: clamp(1.2rem, 5vw, 1.6rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--neon-amber);
+  text-shadow: 0 0 10px rgba(255, 179, 71, 0.6), 0 0 22px rgba(255, 179, 71, 0.3);
+}
+
+#game-header .header-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+.header-left { display: flex; flex-direction: column; }
+
+.home-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+.home-link:hover { color: var(--neon-amber); }
+
+/* ---------- Toast / Message ---------- */
+#toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--text-primary);
+  color: var(--bg-deep);
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 10px 22px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  white-space: nowrap;
+  transition: opacity 0.25s, transform 0.25s;
+  letter-spacing: 0.04em;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---------- Mode Selector ---------- */
+#mode-selector {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 10px 16px 0;
+  width: 100%;
+  max-width: 500px;
+}
+
+.mode-btn {
+  flex: 1;
+  max-width: 160px;
+  padding: 7px 12px;
+  border-radius: 20px;
+  border: 2px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-btn.active,
+.mode-btn:hover {
+  border-color: var(--neon-amber);
+  color: var(--neon-amber);
+  background: rgba(255, 179, 71, 0.08);
+}
+
+.mode-btn.active {
+  background: rgba(255, 179, 71, 0.12);
+}
+
+/* ---------- Mode Label ---------- */
+#mode-label {
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  padding: 4px 16px 0;
+  min-height: 1.2em;
+}
+
+
+#board-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 8px 8px;
+}
+
+#board {
+  display: grid;
+  grid-template-rows: repeat(6, var(--tile-size));
+  grid-template-columns: repeat(5, var(--tile-size));
+  gap: var(--tile-gap);
+}
+
+/* ---------- Tiles ---------- */
+.tile {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border: 2px solid var(--border-default);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.1rem, 4vw, 1.6rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  border-radius: 4px;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Filled (letter typed but not submitted) */
+.tile[data-state="tbd"] {
+  border-color: var(--neon-amber);
+  animation: pop 0.1s ease-in-out;
+}
+
+/* Pour fill pseudo-element – grows from bottom to top */
+.tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transition: none;
+  z-index: 0;
+  border-radius: 2px;
+}
+
+/* Letter sits above the pour fill */
+.tile > span,
+.tile .tile-letter {
+  position: relative;
+  z-index: 1;
+}
+
+/* Correct – Neon Amber pour animation */
+.tile[data-state="correct"] {
+  border: 2px solid var(--color-correct);
+  color: #0d0d0d;
+  text-shadow: none;
+  box-shadow: 0 0 10px rgba(255, 191, 0, 0.5), 0 0 22px rgba(255, 191, 0, 0.25);
+  animation: pour-correct 0.55s ease forwards;
+}
+
+/* Present – Frosted glass pour animation */
+.tile[data-state="present"] {
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  color: var(--text-primary);
+  animation: pour-present 0.45s ease forwards;
+}
+
+/* Absent – Fade to dark */
+.tile[data-state="absent"] {
+  border: 2px solid #555;
+  color: #666;
+  animation: pour-absent 0.35s ease forwards;
+}
+
+/* ---------- Keyboard ---------- */
+#keyboard {
+  width: 100%;
+  max-width: 500px;
+  padding: 8px 8px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kb-row {
+  display: flex;
+  justify-content: center;
+  gap: clamp(3px, 0.8vw, 6px);
+}
+
+.key {
+  height: var(--key-height);
+  min-width: var(--key-min-width);
+  padding: 0 4px;
+  border-radius: 6px;
+  border: none;
+  background: #3d3d45;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: clamp(0.65rem, 2.5vw, 0.85rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s, transform 0.1s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  flex: 1;
+  max-width: 43px;
+}
+
+.key:active { transform: scale(0.94); }
+
+/* Wide keys (Enter / Backspace) */
+.key.wide {
+  min-width: clamp(48px, 10vw, 65px);
+  max-width: 65px;
+  font-size: clamp(0.55rem, 2vw, 0.7rem);
+  letter-spacing: 0.02em;
+}
+
+/* Keyboard colour states */
+.key[data-state="correct"]   { background: var(--color-correct);   color: #0d0d0d; box-shadow: 0 0 8px rgba(255,191,0,0.4); }
+.key[data-state="present"]   { background: rgba(200,200,200,0.45); color: #fff; border: 1px solid rgba(255,255,255,0.6); }
+.key[data-state="absent"]    { background: var(--color-absent);    color: #888; }
+.key[data-state="incorrect"] { background: var(--color-incorrect); color: #666; }
+
+/* ---------- Keyframes ---------- */
+
+/* Letter pop when typed */
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* Pour: Neon Amber fills tile from bottom to top (correct) */
+@keyframes pour-correct {
+  0%   { background: transparent; box-shadow: none; }
+  30%  { background: linear-gradient(to top, #FFBF00 30%, transparent 30%); }
+  60%  { background: linear-gradient(to top, #FFBF00 60%, transparent 60%); }
+  100% {
+    background: #FFBF00;
+    box-shadow: 0 0 10px rgba(255, 191, 0, 0.6), 0 0 22px rgba(255, 191, 0, 0.3);
+  }
+}
+
+/* Pour: Frosted glass fills from bottom to top (present – wrong spot) */
+@keyframes pour-present {
+  0%   { background: transparent; }
+  30%  { background: linear-gradient(to top, rgba(220,220,220,0.4) 30%, transparent 30%); }
+  60%  { background: linear-gradient(to top, rgba(220,220,220,0.4) 60%, transparent 60%); }
+  100% { background: rgba(220, 220, 220, 0.38); }
+}
+
+/* Fade to absent (dimmed out) */
+@keyframes pour-absent {
+  0%   { background: transparent; }
+  100% { background: #333333; }
+}
+
+/* Row shake for invalid round */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%  { transform: translateX(-6px); }
+  30%  { transform: translateX(6px); }
+  45%  { transform: translateX(-6px); }
+  60%  { transform: translateX(6px); }
+  75%  { transform: translateX(-4px); }
+  90%  { transform: translateX(4px); }
+}
+
+.row-shake { animation: shake 0.5s ease; }
+
+/* Win bounce */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-12px); }
+  60% { transform: translateY(-6px); }
+}
+
+.tile-bounce { animation: bounce 0.6s ease; }
+
+/* ---------- End-game modal overlay ---------- */
+#modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s;
+}
+#modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+#modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--amber);
+  border-radius: 14px;
+  padding: 32px 28px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(212, 130, 10, 0.3);
+  transform: scale(0.85);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#modal-overlay.visible #modal { transform: scale(1); }
+
+#modal-emoji { font-size: 3rem; margin-bottom: 8px; }
+
+#modal-title {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  color: var(--neon-amber);
+  text-shadow: 0 0 12px rgba(255, 179, 71, 0.5);
+}
+
+#modal-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+#modal-word {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.modal-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.modal-btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--amber);
+  color: #0d0d0f;
+  font-weight: 800;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: background 0.2s, transform 0.1s;
+}
+.modal-btn:hover { background: var(--amber-light); }
+.modal-btn:active { transform: scale(0.96); }
+
+.modal-btn--next {
+  background: var(--neon-amber);
+  color: #0d0d0d;
+}
+.modal-btn--next:hover { background: var(--amber-light); }
+
+/* ---------- Footer ---------- */
+#game-footer {
+  width: 100%;
+  max-width: 500px;
+  padding: 8px 16px 16px;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-default);
+}
+
+/* ---------- XP Bar ---------- */
+#xp-bar-container {
+  width: 100%;
+  max-width: 500px;
+  padding: 6px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+#xp-bar-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+#xp-track {
+  width: 100%;
+  height: 8px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+
+#xp-fill {
+  height: 100%;
+  background: linear-gradient(to right, #d4820a, #FFBF00);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 6px rgba(255, 191, 0, 0.5);
+}
+
+/* ---------- XP Gain Toast ---------- */
+.xp-toast {
+  position: fixed;
+  top: 70px;
+  right: 16px;
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid var(--neon-amber);
+  color: var(--neon-amber);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  z-index: 150;
+  transition: opacity 0.25s, transform 0.25s;
+  box-shadow: 0 0 10px rgba(255,191,0,0.3);
+}
+.xp-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- Share button ---------- */
+.modal-btn--share {
+  background: #2a2a2a;
+  color: var(--neon-amber);
+  border: 2px solid var(--neon-amber);
+  font-size: 0.82rem;
+}
+.modal-btn--share:hover {
+  background: rgba(255,191,0,0.12);
+}
+
+/* ---------- Responsive tweaks ---------- */
+@media (max-height: 700px) {
+  :root {
+    --tile-size: clamp(38px, 9vw, 52px);
+    --key-height: clamp(34px, 7vw, 50px);
+  }
+  #board-container { padding-top: 8px; }
+}
